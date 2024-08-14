@@ -10,28 +10,17 @@ PORT = 465
 SENDER_EMAIL = "khushi2003p@gmail.com"
 PASSWORD_EMAIL = "oora cvcr sjjd upgb"
 
-
-def send_journal_tip(name, receiver_email, journal_tip_pdf, additional_material_pdf=None):
+def send_email(subject, name, receiver_email, body, journal_pdf, additional_material_pdf=None, pdf_filename="journal_tip.pdf"):
     msg = MIMEMultipart()
-    msg["Subject"] = "Your Personalized Journal Tip"
+    msg["Subject"] = subject
     msg["From"] = formataddr(("AI Journal Assistant", SENDER_EMAIL))
     msg["To"] = receiver_email
 
-    body = f"""
-    Hi {name},
-
-    Thank you for sharing your journal entry. Based on your thoughts, we've crafted a personalized tip just for you.
-
-    Please find the tip attached in the PDF file.
-
-    Best regards,
-    AI Journal Assistant Team
-    """
     msg.attach(MIMEText(body, "plain"))
 
-    with open(journal_tip_pdf, "rb") as f:
-        part = MIMEApplication(f.read(), Name=os.path.basename(journal_tip_pdf))
-        part['Content-Disposition'] = f'attachment; filename="{os.path.basename(journal_tip_pdf)}"'
+    with open(journal_pdf, "rb") as f:
+        part = MIMEApplication(f.read(), Name=os.path.basename(journal_pdf))
+        part['Content-Disposition'] = f'attachment; filename="{pdf_filename}"'
         msg.attach(part)
 
     if additional_material_pdf:
@@ -47,3 +36,31 @@ def send_journal_tip(name, receiver_email, journal_tip_pdf, additional_material_
             print(f"Email sent to {receiver_email}")
     except Exception as e:
         print(f"Error sending email: {e}")
+
+def send_journal_tip(name, receiver_email, journal_tip_pdf, additional_material_pdf=None):
+    subject = "Your Personalized Journal Tip"
+    body = f"""
+    Hi User,
+
+    Thank you for sharing your journal entry. Based on your thoughts, we've crafted a personalized tip just for you.
+
+    Please find the tip attached in the PDF file.
+
+    Best regards,
+    AI Journal Assistant Team
+    """
+    send_email(subject, name, receiver_email, body, journal_tip_pdf, additional_material_pdf, pdf_filename="journal_tip.pdf")
+
+def summary_message(name, receiver_email, journal_tip_pdf, additional_material_pdf=None):
+    subject = "Your Summarized Journal Tip"
+    body = f"""
+    Hi User,
+
+    Thank you for logging into our system. Here is the summarized journal tip based on the journals you have written.
+
+    We appreciate your involvement and look forward to seeing you again soon!
+
+    Best regards,
+    AI Journal Assistant Team
+    """
+    send_email(subject, name, receiver_email, body, journal_tip_pdf, additional_material_pdf, pdf_filename="summary_journal.pdf")
