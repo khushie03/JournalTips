@@ -104,16 +104,7 @@ To deploy JournalTips, follow these steps:
 
 4. **Access the Application**: Open your web browser and go to `http://localhost:8000`.
 
-## Security and Privacy
-
-Your privacy is important to us. JournalTips uses secure email protocols to ensure your data is protected. We never share your journal entries or email address with third parties.
-
-## Troubleshooting
-
-If you encounter any issues or have questions, please contact our support team at support@journal.tips.com.
-
-## Contributing
-
-We welcome contributions to enhance JournalTips! Feel free to fork the repository and submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
+## Youtube Link of the working :
+[Link](https://www.youtube.com/watch?v=H5PemYYvlSQ)
 
 
