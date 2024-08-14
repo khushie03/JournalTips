@@ -2,8 +2,6 @@
 With the help of this you are able to write journals on to your personalized email also you will journal tips on to your registered mail id with that after every N hours you are able to get the summarized overview of the journal written within last N hours . This is built with the CrewAI
 To provide a comprehensive README that includes both user-friendly instructions and detailed technical aspects, we'll expand the "Technical Details" section and include additional sections relevant to developers and those interested in the inner workings of the project.
 
-Here's the enhanced README:
-
 ```markdown
 # JournalTips
 
