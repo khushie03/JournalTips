@@ -3,19 +3,24 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, timedelta, timezone
-import firebase_admin
-from send_mess import summary_message
-from firebase_admin import credentials, firestore
 from fpdf import FPDF
 import logging
-from send_mess import send_journal_tip
+from send_mess import send_journal_tip, summary_message
 from agents import kickoff_journaling_process, tip_process
 
 app = FastAPI()
 
-cred = credentials.Certificate("C:/PROJECTS/ThoughtProcessor/thoughprocessor-bbbc3-firebase-adminsdk-9bms6-1465e75c40.json")
-firebase_admin.initialize_app(cred, {"databaseURL": "https://quizapp-7bc35-default-rtdb.firebaseio.com/"})
-db = firestore.client()
+class MemoryStore:
+    def __init__(self):
+        self.store = {}
+
+    def store_data(self, key, data):
+        self.store[key] = data
+
+    def recall_data(self, key):
+        return self.store.get(key, None)
+
+memory = MemoryStore()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -40,7 +45,6 @@ def create_pdf(content, filename):
 
     pdf.output(filename)
 
-
 @app.post("/login")
 async def login(email: str = Form(...), password: str = Form(...)):
     if email and password:
@@ -54,10 +58,9 @@ async def journal(request: Request):
 
 @app.post("/submit-journal")
 async def submit_journal(request: Request, journal_entry: str = Form(...), email: str = Form(...)):
-    doc_ref = db.collection("journals").document(email)
-    doc_ref.set({
+    memory.store_data(email, {
         "entry": journal_entry,
-        "timestamp": firestore.SERVER_TIMESTAMP
+        "timestamp": datetime.now(timezone.utc)
     })
 
     journal_tip = tip_process(journal_entry)
@@ -77,36 +80,30 @@ async def summarize(request: Request):
 async def submit_summary(request: Request, email: str = Form(...), numberofhours: int = Form(...)):
     time_threshold = datetime.now(timezone.utc) - timedelta(hours=numberofhours)
     logging.info(f"Time threshold: {time_threshold}")
-    doc_ref = db.collection("journals").document(email)
-    doc = doc_ref.get()
+    journal_data = memory.recall_data(email)
 
-    if not doc.exists:
-        logging.info("No document found for this email.")
+    if not journal_data:
+        logging.info("No journal entries found for this email.")
         return {"error": "No journal entries found for this email"}
-    journal_data = doc.to_dict()
-    logging.info(f"Journal data retrieved: {journal_data}")
 
-    if not journal_data or 'entry' not in journal_data:
-        logging.info("No journal entries found.")
-        return {"error": "No journal entries found for this email"}
     entry_timestamp = journal_data.get('timestamp')
-    logging.info(f"Timestamp from Firestore: {entry_timestamp}")
+    logging.info(f"Timestamp from memory: {entry_timestamp}")
     recent_entries = []
+
     if isinstance(entry_timestamp, datetime) and entry_timestamp >= time_threshold:
         recent_entries.append(journal_data['entry'])
 
     if not recent_entries:
         logging.info("No recent entries found.")
         return {"error": "No journal entries found for the specified time period"}
+
     journal_entries_chain = "\n\n".join(recent_entries)
     summarized_result = kickoff_journaling_process(journal_entries_chain)
     pdf_filename = f"{email}_summary.pdf"
     create_pdf([summarized_result], pdf_filename)
     summary_message("User", email, pdf_filename)
-    
+
     return RedirectResponse(url="/", status_code=303)
-
-
 
 if __name__ == '__main__':
     import uvicorn
